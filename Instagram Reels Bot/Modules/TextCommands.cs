@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using Instagram_Reels_Bot.Services;
 using System.Reflection.Metadata;
+using System.Linq;
 
 namespace Instagram_Reels_Bot.Modules
 {
@@ -115,6 +116,7 @@ namespace Instagram_Reels_Bot.Modules
                 DiscordTools.SuppressEmbeds(Context);
             }
         }
+
         /// <summary>
         /// Centralized method to handle all Instagram links and respond to text based messages (No slash commands).
         /// </summary>
@@ -129,6 +131,23 @@ namespace Instagram_Reels_Bot.Modules
                 // Ignore if not on list:
                 return;
             }
+
+            var mentionedUsers = context.Message.MentionedUserIds;
+            if (mentionedUsers.Any(u => u == context.Client.CurrentUser.Id))
+            {
+                // Start downloading the video
+                await Downloader(url, context);
+            }
+            //else
+            //{
+            //    // Add a reaction to the message:
+            //    await context.Message.AddReactionAsync(new Emoji("⏬"));
+            //    Console.WriteLine("Putting a download reaction emoji");
+            //}
+        }
+
+        private static async Task Downloader(string url, ICommandContext context)
+        {
             using (context.Channel.EnterTypingState())
             {
                 // Get IG account:
@@ -169,7 +188,6 @@ namespace Instagram_Reels_Bot.Modules
                         //Response without stream:
                         await context.Message.ReplyAsync(response.contentURL.ToString(), embed: embed.AutoSelector(), allowedMentions: AllowedMentions.None, components: component.AutoSelector());
                     }
-
                 }
                 else
                 {
